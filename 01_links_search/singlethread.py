@@ -68,12 +68,11 @@ if __name__ == '__main__':
         except Exception as ex:
             print(ex)
             continue
+
+        # Do not visit the links that we have previously visited
         unknown_links_from_page = links_from_page - visited_sites.keys()
         unknown_links_from_page = {x for x in unknown_links_from_page if filted_targets(x)}
-
-        to_visit.extend(
-            list(unknown_links_from_page)
-        )
+        to_visit.extend(unknown_links_from_page)
 
         # Check that the target was found
         for link in unknown_links_from_page:
