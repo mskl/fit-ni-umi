@@ -18,7 +18,14 @@ Output example (sample several first visited webpages):
 ...
 ```
 
-Example of the printed trace when the app finishes running:
+Example of the printed trace when the app finishes running (6 is source, 0 is target):
 ```text
-
+...
+0 https://direct.mit.edu/books
+1 http://knihovna.cvut.cz/o-nas/archiv/blog/297-e-zdroje-dostupne-behem-koronaviru#konzultace-k-citacim
+2 https://www.cvut.cz/en/ctu-coronavirus-information
+3 https://old.fit.cvut.cz/en
+4 http://fit.cvut.cz
+5 https://ccmi.fit.cvut.cz/en
+6 http://fit.cvut.cz
 ```

@@ -62,7 +62,7 @@ if __name__ == '__main__':
     """Run the algorithm until we find a sequence of links from fit cvut to the target website"""
     for counter in itertools.count(start=1):
         unexplored_url = to_visit.popleft().rstrip("/")
-        print(f"{counter} ({len(to_visit)}): {unexplored_url}")
+        print(f"{counter} ({len(to_visit)}): {unexplored_url}".rstrip())
         try:
             links_from_page = get_links(unexplored_url)
         except Exception as ex:
@@ -78,7 +78,7 @@ if __name__ == '__main__':
         for link in unknown_links_from_page:
             visited_sites[link] = unexplored_url
             if "mit.edu" in link:
-                print("Found!!!", link)
+                print("=== Target link found! ===", link)
                 traverse(link)
                 exit(0)
 
