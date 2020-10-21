@@ -8,6 +8,7 @@ let svg = d3.select("#map > svg"),
 
 let g;
 let points = [];
+let polygons = [];
 
 // behaviors
 let dragger = d3.behavior.drag()
@@ -35,12 +36,12 @@ svg.on('mouseup', function () {
     points.push(d3.mouse(this));
     g.select('polyline').remove();
 
-    var polyline = g.append('polyline')
+    let polyline = g.append('polyline')
         .attr('points', points)
         .style('fill', 'none')
         .attr('stroke', '#000');
 
-    for (var i = 0; i < points.length; i++) {
+    for (let i = 0; i < points.length; i++) {
         g.append('circle')
             .attr('cx', points[i][0])
             .attr('cy', points[i][1])
@@ -55,14 +56,16 @@ svg.on('mouseup', function () {
 function closePolygon() {
     svg.select('g.drawPoly').remove();
 
-    var g = svg.append('g');
+    let g = svg.append('g');
 
-    g.append('polygon')
+    let polygon = g.append('polygon')
         .attr('points', points)
         .style('fill', getRandomColor());
 
-    for (var i = 0; i < points.length; i++) {
-        var circle = g.selectAll('circles')
+    polygons.push(polygon);
+
+    for (let i = 0; i < points.length; i++) {
+        let circle = g.selectAll('circles')
             .data([points[i]])
             .enter()
             .append('circle')
@@ -77,7 +80,6 @@ function closePolygon() {
     }
 
     points.splice(0);
-
     drawing = false;
 }
 
@@ -85,11 +87,13 @@ svg.on('mousemove', function () {
     if (!drawing)
         return;
 
-    var g = d3.select('g.drawPoly');
+    let g = d3.select('g.drawPoly');
 
+    // Remove the previous line
     g.select('line').remove();
 
-    var line = g.append('line')
+    // Add the new line
+    g.append('line')
         .attr('x1', startPoint[0])
         .attr('y1', startPoint[1])
         .attr('x2', d3.mouse(this)[0] + 2)
@@ -101,7 +105,8 @@ svg.on('mousemove', function () {
 function handleDrag() {
     if (drawing)
         return;
-    dragging = true;
+    else
+        dragging = true;
 
     let dragCircle = d3.select(this), newPoints = [], circle;
     let poly = d3.select(this.parentNode).select('polygon');
