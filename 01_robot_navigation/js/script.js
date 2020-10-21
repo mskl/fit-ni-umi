@@ -17,7 +17,8 @@ let dragger = d3.behavior.drag()
     });
 
 svg.on('mouseup', function () {
-    if (dragging) return;
+    if (dragging)
+        return;
 
     drawing = true;
     startPoint = [d3.mouse(this)[0], d3.mouse(this)[1]];
@@ -81,7 +82,8 @@ function closePolygon() {
 }
 
 svg.on('mousemove', function () {
-    if (!drawing) return;
+    if (!drawing)
+        return;
 
     var g = d3.select('g.drawPoly');
 
@@ -97,16 +99,17 @@ svg.on('mousemove', function () {
 });
 
 function handleDrag() {
-    if (drawing) return;
+    if (drawing)
+        return;
     dragging = true;
 
-    var dragCircle = d3.select(this), newPoints = [], circle;
-    var poly = d3.select(this.parentNode).select('polygon');
-    var circles = d3.select(this.parentNode).selectAll('circle');
+    let dragCircle = d3.select(this), newPoints = [], circle;
+    let poly = d3.select(this.parentNode).select('polygon');
+    let circles = d3.select(this.parentNode).selectAll('circle');
 
     dragCircle.attr('cx', d3.event.x).attr('cy', d3.event.y);
 
-    for (var i = 0; i < circles[0].length; i++) {
+    for (let i = 0; i < circles[0].length; i++) {
         circle = d3.select(circles[0][i]);
         newPoints.push([circle.attr('cx'), circle.attr('cy')]);
     }
@@ -115,11 +118,9 @@ function handleDrag() {
 }
 
 function getRandomColor() {
-    var letters = '0123456789ABCDEF'.split('');
-
-    var color = '#';
-    for (var i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += '0123456789ABCDEF'.split('')[Math.floor(Math.random() * 16)];
     }
 
     return color;
