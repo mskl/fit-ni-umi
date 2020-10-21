@@ -1,15 +1,16 @@
-var dragging = false;
-var drawing = false;
-var startPoint;
+let dragging = false;
+let drawing = false;
+let startPoint;
 
 let svg = d3.select("#map > svg"),
     width = +svg.style("width").replace("px", ""),
     height = +svg.style("height").replace("px", "");
 
-var points = [], g;
+let g;
+let points = [];
 
 // behaviors
-var dragger = d3.behavior.drag()
+let dragger = d3.behavior.drag()
     .on('drag', handleDrag)
     .on('dragend', function (d) {
         dragging = false;
