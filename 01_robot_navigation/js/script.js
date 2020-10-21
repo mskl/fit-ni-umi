@@ -2,10 +2,9 @@ var dragging = false;
 var drawing = false;
 var startPoint;
 
-var svg = d3.select('body')
-    .append('svg')
-    .attr('height', 500)
-    .attr('width', 500);
+let svg = d3.select("#map > svg"),
+    width = +svg.style("width").replace("px", ""),
+    height = +svg.style("height").replace("px", "");
 
 var points = [], g;
 

@@ -81,4 +81,3 @@ if __name__ == '__main__':
                 print("=== Target link found! ===", link)
                 traverse(link)
                 exit(0)
-

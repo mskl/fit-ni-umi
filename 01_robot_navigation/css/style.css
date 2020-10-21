@@ -1,8 +1,25 @@
+body {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    background-color: cornsilk;
+}
+
 svg {
     border: 1px solid;
+    margin-left:auto;
+    margin-right:auto;
+    display: block;
+    background-color: white;
 }
-path{
+
+path {
     fill: lightsalmon;
     stroke: salmon;
     stroke-width: 5px;
+}
+
+#group {
+
 }
