@@ -1,6 +1,5 @@
 let dragging = false;
 let drawing = false;
-let startPoint;
 
 let svg = d3.select("#map > svg"),
     width = +svg.style("width").replace("px", ""),
@@ -9,6 +8,22 @@ let svg = d3.select("#map > svg"),
 let g;
 let points = [];
 let polygons = [];
+
+let startEndGroup = svg.append("g");
+
+const ptsOffset = 63;
+let robotStart = startEndGroup.append("circle")
+    .attr("cx", ptsOffset)
+    .attr("cy", height/2)
+    .attr("r", 10)
+    .attr("fill", "green");
+
+let robotEnd = startEndGroup.append("circle")
+    .attr("cx", width-ptsOffset)
+    .attr("cy", height/2)
+    .attr("r", 10)
+    .attr("fill", "red");
+
 
 // behaviors
 let dragger = d3.behavior.drag()
@@ -20,8 +35,9 @@ let dragger = d3.behavior.drag()
 svg.on('mouseup', function () {
     if (dragging)
         return;
+    else
+        drawing = true;
 
-    drawing = true;
     startPoint = [d3.mouse(this)[0], d3.mouse(this)[1]];
 
     if (svg.select('g.drawPoly').empty()) {
@@ -53,24 +69,20 @@ svg.on('mouseup', function () {
     }
 });
 
-function closePolygon() {
-    svg.select('g.drawPoly').remove();
-
+function drawPolygon(_points) {
     let g = svg.append('g');
 
     let polygon = g.append('polygon')
-        .attr('points', points)
+        .attr('points', _points)
         .style('fill', getRandomColor());
 
-    polygons.push(polygon);
-
-    for (let i = 0; i < points.length; i++) {
+    for (let i = 0; i < _points.length; i++) {
         let circle = g.selectAll('circles')
-            .data([points[i]])
+            .data([_points[i]])
             .enter()
             .append('circle')
-            .attr('cx', points[i][0])
-            .attr('cy', points[i][1])
+            .attr('cx', _points[i][0])
+            .attr('cy', _points[i][1])
             .attr('r', 4)
             .attr('fill', '#FDBC07')
             .attr('stroke', '#000')
@@ -79,7 +91,13 @@ function closePolygon() {
             .call(dragger);
     }
 
-    points.splice(0);
+    polygons.push(polygon);
+}
+
+function closePolygon() {
+    svg.select('g.drawPoly').remove();
+    drawPolygon(points);
+    points = [];
     drawing = false;
 }
 
@@ -130,3 +148,6 @@ function getRandomColor() {
 
     return color;
 }
+
+// Add some polygon for testing purposes
+drawPolygon([[293, 196], [414, 64], [431, 190]]);
