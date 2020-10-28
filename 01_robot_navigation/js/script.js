@@ -5,8 +5,9 @@ let svg = d3.select("#map > svg"),
     width = +svg.style("width").replace("px", ""),
     height = +svg.style("height").replace("px", "");
 
-// Store points when creating polygon
+// Original variables
 let points = [];
+let startPoint;
 
 // All created polygons
 let polygons = [];
@@ -17,21 +18,21 @@ let currentlyDrawing = svg.append("g");
 let startEndGroup = svg.append("g");
 let linesGroup = svg.append("g");
 
-let startPoint = [63, height/2];
-let endPoint = [width-63, height/2];
+let robotStartPoint = [63, height/2];
+let robotEndPoint = [width-63, height/2];
 
 // All created lines
 let lines = [];
 
 startEndGroup.append("circle")
-    .attr("cx", startPoint[0])
-    .attr("cy", startPoint[1])
+    .attr("cx", robotStartPoint[0])
+    .attr("cy", robotStartPoint[1])
     .attr("r", 5)
     .attr("fill", "green");
 
 startEndGroup.append("circle")
-    .attr("cx", endPoint[0])
-    .attr("cy", endPoint[1])
+    .attr("cx", robotEndPoint[0])
+    .attr("cy", robotEndPoint[1])
     .attr("r", 5)
     .attr("fill", "red");
 
@@ -125,16 +126,16 @@ function handleDrag() {
 
 function drawLine(start, end) {
     // Check intersections with all existing polygons
-    // for (let p = 0; p < polygons.length; p++) {
-    //     let polygonPoints = pointsFromPolygon(polygons[p]);
-    //     for (let r = 0; r < polygonPoints.length; r++) {
-    //         let polyStart = polygonPoints[r];
-    //         let polyEnd = polygonPoints[(r+1) % polygonPoints.length];
-    //         if (intersects(start, end, polyStart, polyEnd)) {
-    //             return null;
-    //         }
-    //     }
-    // }
+    for (let p = 0; p < polygons.length; p++) {
+        let polygonPoints = pointsFromPolygon(polygons[p][0][0]);
+        for (let r = 0; r < polygonPoints.length; r++) {
+            let polyStart = polygonPoints[r];
+            let polyEnd = polygonPoints[(r+1) % polygonPoints.length];
+            if (intersects(start, end, polyStart, polyEnd)) {
+                return null;
+            }
+        }
+    }
 
     let line = linesGroup.append('line')
         .style("stroke", "black")
@@ -170,27 +171,28 @@ function drawPolygon(polyPoints) {
     }
 
     // Delete all intersecting lines
-    // for (let startIndex = 0; startIndex < polyPoints.length; startIndex++) {
-    //     let endIndex = (startIndex+1) % polyPoints.length;
-    //     lines = lines.filter(line => {
-    //         let [start, end] = pointsFromLine(line);
-    //         let intersection = intersects(polyPoints[startIndex], polyPoints[endIndex], start, end);
-    //         if (intersection) {
-    //             line.remove();
-    //         }
-    //         return !intersection;
-    //     });
-    // }
+    for (let startIndex = 0; startIndex < polyPoints.length; startIndex++) {
+        let endIndex = (startIndex+1) % polyPoints.length;
+        lines = lines.filter(line => {
+            let [start, end] = pointsFromLine(line);
+            let intersection = intersects(polyPoints[startIndex], polyPoints[endIndex], start, end);
+            if (intersection) {
+                line.remove();
+            }
+            return !intersection;
+        });
+    }
 
     // Add all new possible lines
     polyPoints.forEach(polyPoint => {
-        drawLine(polyPoint, startPoint);
-        drawLine(polyPoint, endPoint);
+        drawLine(polyPoint, robotStartPoint);
+        drawLine(polyPoint, robotEndPoint);
 
         polygons.forEach(polygon => {
-           pointsFromPolygon(polygon).forEach(p2Point => {
-               drawLine(polyPoint, p2Point);
-           })
+            let points = pointsFromPolygon(polygon[0][0]);
+            points.forEach(p2Point => {
+                drawLine(polyPoint, p2Point);
+            })
         });
     });
 
@@ -198,9 +200,9 @@ function drawPolygon(polyPoints) {
 }
 
 // Draw the baseline
-drawLine(startPoint, endPoint);
+drawLine(robotStartPoint, robotEndPoint);
 
 // Add some polygon for testing purposes
-drawPolygon([[293, 196], [414, 64], [431, 190]]);
+// drawPolygon([[293, 196], [414, 64], [431, 190]]);
 
 
