@@ -20,6 +20,9 @@ let linesGroup = svg.append("g");
 let startPoint = [63, height/2];
 let endPoint = [width-63, height/2];
 
+// All created lines
+let lines = [];
+
 startEndGroup.append("circle")
     .attr("cx", startPoint[0])
     .attr("cy", startPoint[1])
@@ -133,13 +136,15 @@ function drawLine(start, end) {
     //     }
     // }
 
-    return linesGroup.append('line')
+    let line = linesGroup.append('line')
         .style("stroke", "black")
-        .style("stroke-width", 1)
+        .style("stroke-width", 3)
         .attr("x1", start[0])
         .attr("y1", start[1])
         .attr("x2", end[0])
         .attr("y2", end[1]);
+
+    lines.push(line);
 }
 
 function drawPolygon(polyPoints) {
@@ -179,21 +184,21 @@ function drawPolygon(polyPoints) {
 
     // Add all new possible lines
     polyPoints.forEach(polyPoint => {
-        points.forEach(point => {
-            let possibleLine = drawLine(polyPoint, point);
-            if (possibleLine != null) {
-                lines.push(possibleLine);
-            }
-        })
+        drawLine(polyPoint, startPoint);
+        drawLine(polyPoint, endPoint);
+
+        polygons.forEach(polygon => {
+           pointsFromPolygon(polygon).forEach(p2Point => {
+               drawLine(polyPoint, p2Point);
+           })
+        });
     });
 
     polygons.push(polygon);
 }
 
-// All created lines
-let lines = [
-    drawLine(startPoint, endPoint)
-];
+// Draw the baseline
+drawLine(startPoint, endPoint);
 
 // Add some polygon for testing purposes
 drawPolygon([[293, 196], [414, 64], [431, 190]]);
