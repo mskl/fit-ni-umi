@@ -121,22 +121,25 @@ function handleDrag() {
 }
 
 function drawLine(start, end) {
-    let line = linesGroup.append('line')
+    // Check intersections with all existing polygons
+    // for (let p = 0; p < polygons.length; p++) {
+    //     let polygonPoints = pointsFromPolygon(polygons[p]);
+    //     for (let r = 0; r < polygonPoints.length; r++) {
+    //         let polyStart = polygonPoints[r];
+    //         let polyEnd = polygonPoints[(r+1) % polygonPoints.length];
+    //         if (intersects(start, end, polyStart, polyEnd)) {
+    //             return null;
+    //         }
+    //     }
+    // }
+
+    return linesGroup.append('line')
         .style("stroke", "black")
         .style("stroke-width", 1)
         .attr("x1", start[0])
         .attr("y1", start[1])
         .attr("x2", end[0])
         .attr("y2", end[1]);
-
-    return line
-}
-
-function pointsFromLine(line) {
-    return [
-        [line[0][0].x1.baseVal.value, line[0][0].y1.baseVal.value],
-        [line[0][0].x2.baseVal.value, line[0][0].y2.baseVal.value]
-    ];
 }
 
 function drawPolygon(polyPoints) {
@@ -162,30 +165,35 @@ function drawPolygon(polyPoints) {
     }
 
     // Delete all intersecting lines
-    for (let startIndex = 0; startIndex < polyPoints.length; startIndex++) {
-        let endIndex = (startIndex+1) % polyPoints.length;
+    // for (let startIndex = 0; startIndex < polyPoints.length; startIndex++) {
+    //     let endIndex = (startIndex+1) % polyPoints.length;
+    //     lines = lines.filter(line => {
+    //         let [start, end] = pointsFromLine(line);
+    //         let intersection = intersects(polyPoints[startIndex], polyPoints[endIndex], start, end);
+    //         if (intersection) {
+    //             line.remove();
+    //         }
+    //         return !intersection;
+    //     });
+    // }
 
-        lines = lines.filter(line => {
-            let [start, end] = pointsFromLine(line);
-            let intersection = intersects(polyPoints[startIndex], polyPoints[endIndex], start, end);
-
-            if (intersection) {
-                line.remove();
-                return false;
+    // Add all new possible lines
+    polyPoints.forEach(polyPoint => {
+        points.forEach(point => {
+            let possibleLine = drawLine(polyPoint, point);
+            if (possibleLine != null) {
+                lines.push(possibleLine);
             }
-
-            return true;
-        });
-    }
+        })
+    });
 
     polygons.push(polygon);
 }
 
-// Draw the beginning line
-let line = drawLine(startPoint, endPoint);
-
 // All created lines
-let lines = [line];
+let lines = [
+    drawLine(startPoint, endPoint)
+];
 
 // Add some polygon for testing purposes
 drawPolygon([[293, 196], [414, 64], [431, 190]]);

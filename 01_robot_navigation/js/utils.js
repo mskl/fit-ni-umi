@@ -21,3 +21,14 @@ function getRandomColor() {
 
     return color;
 }
+
+function pointsFromPolygon(elem) {
+    return [...elem.points].map((pt) => [pt.x, pt.y]);
+}
+
+function pointsFromLine(line) {
+    return [
+        [line[0][0].x1.baseVal.value, line[0][0].y1.baseVal.value],
+        [line[0][0].x2.baseVal.value, line[0][0].y2.baseVal.value]
+    ];
+}
