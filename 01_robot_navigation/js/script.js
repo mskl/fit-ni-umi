@@ -6,24 +6,34 @@ let svg = d3.select("#map > svg"),
     height = +svg.style("height").replace("px", "");
 
 let g;
+
+// Store points when creating polygon
 let points = [];
+
+// All created polygons
 let polygons = [];
 
+// All created lines
+let lines = [];
+
 let startEndGroup = svg.append("g");
+let linesGroup = svg.append("g");
 
 const ptsOffset = 63;
-let robotStart = startEndGroup.append("circle")
-    .attr("cx", ptsOffset)
-    .attr("cy", height/2)
-    .attr("r", 10)
+let startPoint = [ptsOffset, height/2];
+let endPoint = [width-ptsOffset, height/2];
+points.push([startPoint, endPoint]);
+startEndGroup.append("circle")
+    .attr("cx", startPoint[0])
+    .attr("cy", startPoint[1])
+    .attr("r", 5)
     .attr("fill", "green");
 
-let robotEnd = startEndGroup.append("circle")
-    .attr("cx", width-ptsOffset)
-    .attr("cy", height/2)
-    .attr("r", 10)
+startEndGroup.append("circle")
+    .attr("cx", endPoint[0])
+    .attr("cy", endPoint[1])
+    .attr("r", 5)
     .attr("fill", "red");
-
 
 // behaviors
 let dragger = d3.behavior.drag()
@@ -126,7 +136,10 @@ function handleDrag() {
     else
         dragging = true;
 
-    let dragCircle = d3.select(this), newPoints = [], circle;
+    let dragCircle = d3.select(this);
+    let newPoints = [];
+    let circle;
+
     let poly = d3.select(this.parentNode).select('polygon');
     let circles = d3.select(this.parentNode).selectAll('circle');
 
@@ -140,13 +153,16 @@ function handleDrag() {
     poly.attr('points', newPoints);
 }
 
-function getRandomColor() {
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-        color += '0123456789ABCDEF'.split('')[Math.floor(Math.random() * 16)];
-    }
+function drawLine(start, end) {
+    let line = linesGroup.append('line')
+        .style("stroke", "lightgreen")
+        .style("stroke-width", 3)
+        .attr("x1", start[0])
+        .attr("y1", start[1])
+        .attr("x2", end[0])
+        .attr("y2", end[1]);
 
-    return color;
+    return line
 }
 
 // Add some polygon for testing purposes
