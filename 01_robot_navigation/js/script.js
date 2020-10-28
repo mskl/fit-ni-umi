@@ -165,13 +165,17 @@ function drawPolygon(polyPoints) {
     for (let startIndex = 0; startIndex < polyPoints.length; startIndex++) {
         let endIndex = (startIndex+1) % polyPoints.length;
 
-        for (let l = 0; l < lines.length; l++) {
-            let [start, end] = pointsFromLine(lines[l]);
-            if (intersects(polyPoints[startIndex], polyPoints[endIndex], start, end)) {
-                console.log("Intersection!!!!");
-            }
-        }
+        lines = lines.filter(line => {
+            let [start, end] = pointsFromLine(line);
+            let intersection = intersects(polyPoints[startIndex], polyPoints[endIndex], start, end);
 
+            if (intersection) {
+                line.remove();
+                return false;
+            }
+
+            return true;
+        });
     }
 
     polygons.push(polygon);
