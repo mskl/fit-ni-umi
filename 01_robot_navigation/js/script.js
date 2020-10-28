@@ -20,9 +20,6 @@ let linesGroup = svg.append("g");
 let startPoint = [63, height/2];
 let endPoint = [width-63, height/2];
 
-// All created lines
-let lines = [startPoint, endPoint];
-
 startEndGroup.append("circle")
     .attr("cx", startPoint[0])
     .attr("cy", startPoint[1])
@@ -73,31 +70,6 @@ svg.on('mouseup', function () {
             .style({cursor: 'pointer'});
     }
 });
-
-function drawPolygon(_points) {
-    let polygonGroup = svg.append('g');
-
-    let polygon = polygonGroup.append('polygon')
-        .attr('points', _points)
-        .style('fill', getRandomColor());
-
-    for (let i = 0; i < _points.length; i++) {
-        let circle = polygonGroup.selectAll('circles')
-            .data([_points[i]])
-            .enter()
-            .append('circle')
-            .attr('cx', _points[i][0])
-            .attr('cy', _points[i][1])
-            .attr('r', 4)
-            .attr('fill', '#FDBC07')
-            .attr('stroke', '#000')
-            .attr('is-handle', 'true')
-            .style({cursor: 'move'})
-            .call(dragger);
-    }
-
-    polygons.push(polygon);
-}
 
 function closePolygon() {
     currentlyDrawing.remove();
@@ -160,8 +132,58 @@ function drawLine(start, end) {
     return line
 }
 
+function pointsFromLine(line) {
+    return [
+        [line[0][0].x1.baseVal.value, line[0][0].y1.baseVal.value],
+        [line[0][0].x2.baseVal.value, line[0][0].y2.baseVal.value]
+    ];
+}
+
+function drawPolygon(polyPoints) {
+    let polygonGroup = svg.append('g');
+
+    let polygon = polygonGroup.append('polygon')
+        .attr('points', polyPoints)
+        .style('fill', getRandomColor());
+
+    for (let i = 0; i < polyPoints.length; i++) {
+        let circle = polygonGroup.selectAll('circles')
+            .data([polyPoints[i]])
+            .enter()
+            .append('circle')
+            .attr('cx', polyPoints[i][0])
+            .attr('cy', polyPoints[i][1])
+            .attr('r', 4)
+            .attr('fill', '#FDBC07')
+            .attr('stroke', '#000')
+            .attr('is-handle', 'true')
+            .style({cursor: 'move'})
+            .call(dragger);
+    }
+
+    // Delete all intersecting lines
+    for (let startIndex = 0; startIndex < polyPoints.length; startIndex++) {
+        let endIndex = (startIndex+1) % polyPoints.length;
+
+        for (let l = 0; l < lines.length; l++) {
+            let [start, end] = pointsFromLine(lines[l]);
+            if (intersects(polyPoints[startIndex], polyPoints[endIndex], start, end)) {
+                console.log("Intersection!!!!");
+            }
+        }
+
+    }
+
+    polygons.push(polygon);
+}
+
+// Draw the beginning line
+let line = drawLine(startPoint, endPoint);
+
+// All created lines
+let lines = [line];
+
 // Add some polygon for testing purposes
 drawPolygon([[293, 196], [414, 64], [431, 190]]);
 
-// Draw the beginning line
-drawLine(startPoint, endPoint);
+
