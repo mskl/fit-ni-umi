@@ -1,6 +1,8 @@
 let dragging = false;
 let drawing = false;
 
+let idCounter = 0;
+
 let svg = d3.select("#map > svg"),
     width = +svg.style("width").replace("px", ""),
     height = +svg.style("height").replace("px", "");
@@ -24,16 +26,18 @@ let robotEndPoint = [width-63, height/2];
 // All created lines
 let lines = [];
 
-startEndGroup.append("circle")
+let startCircle = startEndGroup.append("circle")
     .attr("cx", robotStartPoint[0])
     .attr("cy", robotStartPoint[1])
     .attr("r", 5)
+    .attr("uid", idCounter++)
     .attr("fill", "green");
 
-startEndGroup.append("circle")
+let endCircle = startEndGroup.append("circle")
     .attr("cx", robotEndPoint[0])
     .attr("cy", robotEndPoint[1])
     .attr("r", 5)
+    .attr("uid", idCounter++)
     .attr("fill", "red");
 
 // behaviors
@@ -72,6 +76,7 @@ svg.on('mouseup', function () {
             .attr('fill', 'yellow')
             .attr('stroke', '#000')
             .attr('is-handle', 'true')
+            .attr('uid', idCounter++)
             .style({cursor: 'pointer'});
     });
 });
@@ -114,14 +119,44 @@ function handleDrag() {
     let poly = d3.select(this.parentNode).select('polygon');
     let circles = d3.select(this.parentNode).selectAll('circle');
 
+    // Move the dragged circle
     dragCircle.attr('cx', d3.event.x).attr('cy', d3.event.y);
 
+    // Move the points of the polygon
     circles[0].forEach(circle => {
         circle = d3.select(circle);
         newPoints.push([circle.attr('cx'), circle.attr('cy')]);
     });
 
     poly.attr('points', newPoints);
+}
+
+function drawLineFromCircles(startCircle, endCircle) {
+    let s = pointsFromCircle(startCircle);
+    let e = pointsFromCircle(endCircle);
+
+    for (let p = 0; p < polygons.length; p++) {
+        let polygonPoints = pointsFromPolygon(polygons[p][0][0]);
+        for (let r = 0; r < polygonPoints.length; r++) {
+            let polyStart = polygonPoints[r];
+            let polyEnd = polygonPoints[(r+1) % polygonPoints.length];
+            if (intersects(s, e, polyStart, polyEnd)) {
+                return;
+            }
+        }
+    }
+
+    let line = linesGroup.append('line')
+        .style("stroke", "black")
+        .style("stroke-width", 1)
+        .attr("x1", s[0])
+        .attr("y1", s[1])
+        .attr("uid1", startCircle[0][0].getAttribute("uid"))
+        .attr("x2", e[0])
+        .attr("y2", e[1])
+        .attr("uid2", endCircle[0][0].getAttribute("uid"));
+
+    lines.push(line);
 }
 
 function drawLine(start, end) {
@@ -132,7 +167,7 @@ function drawLine(start, end) {
             let polyStart = polygonPoints[r];
             let polyEnd = polygonPoints[(r+1) % polygonPoints.length];
             if (intersects(start, end, polyStart, polyEnd)) {
-                return null;
+                return;
             }
         }
     }
@@ -153,19 +188,24 @@ function drawPolygon(polyPoints) {
 
     let polygon = polygonGroup.append('polygon')
         .attr('points', polyPoints)
-        .style('fill', getRandomColor());
+        .style('fill', getRandomColor())
+        .style('opacity', 0.2);
 
-    for (let i = 0; i < polyPoints.length; i++) {
+    for (let polyPointStartIndex = 0; polyPointStartIndex < polyPoints.length; polyPointStartIndex++) {
+        let polyPointEndIndex = (polyPointStartIndex+1) % polyPoints.length;
+        drawLine(polyPoints[polyPointStartIndex], polyPoints[polyPointEndIndex]);
+
         let circle = polygonGroup.selectAll('circles')
-            .data([polyPoints[i]])
+            .data([polyPoints[polyPointStartIndex]])
             .enter()
             .append('circle')
-            .attr('cx', polyPoints[i][0])
-            .attr('cy', polyPoints[i][1])
+            .attr('cx', polyPoints[polyPointStartIndex][0])
+            .attr('cy', polyPoints[polyPointStartIndex][1])
             .attr('r', 4)
             .attr('fill', '#FDBC07')
             .attr('stroke', '#000')
             .attr('is-handle', 'true')
+            .attr('uid', idCounter++)
             .style({cursor: 'move'})
             .call(dragger);
     }
@@ -200,7 +240,8 @@ function drawPolygon(polyPoints) {
 }
 
 // Draw the baseline
-drawLine(robotStartPoint, robotEndPoint);
+// drawLine(robotStartPoint, robotEndPoint);
+drawLineFromCircles(startCircle, endCircle);
 
 // Add some polygon for testing purposes
 drawPolygon([[293, 196], [414, 64], [431, 190]]);

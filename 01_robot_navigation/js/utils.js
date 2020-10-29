@@ -32,3 +32,7 @@ function pointsFromLine(line) {
         [line[0][0].x2.baseVal.value, line[0][0].y2.baseVal.value]
     ];
 }
+
+function pointsFromCircle(circle) {
+    return [circle[0][0].getAttribute("cx"), circle[0][0].getAttribute("cy")]
+}
