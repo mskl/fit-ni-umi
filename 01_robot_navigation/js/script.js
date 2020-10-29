@@ -9,6 +9,7 @@ let svg = d3.select("#map > svg"),
 
 // Original variables
 let points = [];
+let circles = [];
 let startPoint;
 
 // All created polygons
@@ -61,24 +62,27 @@ svg.on('mouseup', function () {
 
     points.push(startPoint);
 
+    // Redraw thr polyline
     currentlyDrawing.select('polyline').remove();
-
-    let polyline = currentlyDrawing.append('polyline')
+    currentlyDrawing.append('polyline')
         .attr('points', points)
         .style('fill', 'none')
         .attr('stroke', '#000');
 
-    points.forEach(point => {
-        currentlyDrawing.append('circle')
-            .attr('cx', point[0])
-            .attr('cy', point[1])
-            .attr('r', 4)
-            .attr('fill', 'yellow')
-            .attr('stroke', '#000')
-            .attr('is-handle', 'true')
-            .attr('uid', idCounter++)
-            .style({cursor: 'pointer'});
-    });
+    circles.push(
+        points.map(point => {
+                return currentlyDrawing.append('circle')
+                    .attr('cx', point[0])
+                    .attr('cy', point[1])
+                    .attr('r', 4)
+                    .attr('fill', 'yellow')
+                    .attr('stroke', '#000')
+                    .attr('is-handle', 'true')
+                    .attr('uid', idCounter++)
+                    .style({cursor: 'pointer'});
+            }
+        )
+    )
 });
 
 function closePolygon() {
@@ -117,13 +121,13 @@ function handleDrag() {
     let newPoints = [];
 
     let poly = d3.select(this.parentNode).select('polygon');
-    let circles = d3.select(this.parentNode).selectAll('circle');
+    let parentCircles = d3.select(this.parentNode).selectAll('circle');
 
     // Move the dragged circle
     dragCircle.attr('cx', d3.event.x).attr('cy', d3.event.y);
 
     // Move the points of the polygon
-    circles[0].forEach(circle => {
+    parentCircles[0].forEach(circle => {
         circle = d3.select(circle);
         newPoints.push([circle.attr('cx'), circle.attr('cy')]);
     });
