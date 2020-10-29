@@ -55,7 +55,8 @@ svg.on('mouseup', function () {
         return;
     }
 
-    points.push(d3.mouse(this));
+    points.push(startPoint);
+
     currentlyDrawing.select('polyline').remove();
 
     let polyline = currentlyDrawing.append('polyline')
@@ -63,16 +64,16 @@ svg.on('mouseup', function () {
         .style('fill', 'none')
         .attr('stroke', '#000');
 
-    for (let i = 0; i < points.length; i++) {
+    points.forEach(point => {
         currentlyDrawing.append('circle')
-            .attr('cx', points[i][0])
-            .attr('cy', points[i][1])
+            .attr('cx', point[0])
+            .attr('cy', point[1])
             .attr('r', 4)
             .attr('fill', 'yellow')
             .attr('stroke', '#000')
             .attr('is-handle', 'true')
             .style({cursor: 'pointer'});
-    }
+    });
 });
 
 function closePolygon() {
@@ -80,6 +81,7 @@ function closePolygon() {
     currentlyDrawing = svg.append("g");
 
     drawPolygon(points);
+
     points = [];
     drawing = false;
 }
@@ -104,22 +106,20 @@ svg.on('mousemove', function () {
 function handleDrag() {
     if (drawing)
         return;
-    else
-        dragging = true;
+    dragging = true;
 
     let dragCircle = d3.select(this);
     let newPoints = [];
-    let circle;
 
     let poly = d3.select(this.parentNode).select('polygon');
     let circles = d3.select(this.parentNode).selectAll('circle');
 
     dragCircle.attr('cx', d3.event.x).attr('cy', d3.event.y);
 
-    for (let i = 0; i < circles[0].length; i++) {
-        circle = d3.select(circles[0][i]);
+    circles[0].forEach(circle => {
+        circle = d3.select(circle);
         newPoints.push([circle.attr('cx'), circle.attr('cy')]);
-    }
+    });
 
     poly.attr('points', newPoints);
 }
@@ -139,7 +139,7 @@ function drawLine(start, end) {
 
     let line = linesGroup.append('line')
         .style("stroke", "black")
-        .style("stroke-width", 3)
+        .style("stroke-width", 1)
         .attr("x1", start[0])
         .attr("y1", start[1])
         .attr("x2", end[0])
@@ -170,19 +170,6 @@ function drawPolygon(polyPoints) {
             .call(dragger);
     }
 
-    // Delete all intersecting lines
-    for (let startIndex = 0; startIndex < polyPoints.length; startIndex++) {
-        let endIndex = (startIndex+1) % polyPoints.length;
-        lines = lines.filter(line => {
-            let [start, end] = pointsFromLine(line);
-            let intersection = intersects(polyPoints[startIndex], polyPoints[endIndex], start, end);
-            if (intersection) {
-                line.remove();
-            }
-            return !intersection;
-        });
-    }
-
     // Add all new possible lines
     polyPoints.forEach(polyPoint => {
         drawLine(polyPoint, robotStartPoint);
@@ -196,6 +183,19 @@ function drawPolygon(polyPoints) {
         });
     });
 
+    // Delete all intersecting lines
+    for (let startIndex = 0; startIndex < polyPoints.length; startIndex++) {
+        let endIndex = (startIndex+1) % polyPoints.length;
+        lines = lines.filter(line => {
+            let [start, end] = pointsFromLine(line);
+            let intersection = intersects(polyPoints[startIndex], polyPoints[endIndex], start, end);
+            if (intersection) {
+                line.remove();
+            }
+            return !intersection;
+        });
+    }
+
     polygons.push(polygon);
 }
 
@@ -203,6 +203,6 @@ function drawPolygon(polyPoints) {
 drawLine(robotStartPoint, robotEndPoint);
 
 // Add some polygon for testing purposes
-// drawPolygon([[293, 196], [414, 64], [431, 190]]);
+drawPolygon([[293, 196], [414, 64], [431, 190]]);
 
 
