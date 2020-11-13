@@ -36,3 +36,9 @@ function pointsFromLine(line) {
 function pointsFromCircle(circle) {
     return [circle[0][0].getAttribute("cx"), circle[0][0].getAttribute("cy")]
 }
+
+if (!Array.prototype.last){
+    Array.prototype.last = function(){
+        return this[this.length - 1];
+    };
+}
