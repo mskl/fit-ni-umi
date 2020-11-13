@@ -9,35 +9,39 @@ let currentNodes = [];
 
 let allConnections = [];
 class Connection {
+    /** Factory method to that tries to generate a connections and possibly returs null if failed */
     static tryCreate(node1, node2, inner) {
-        allConnections.forEach(connection => {
-            // Remove intersecting lines and possibly fail
+        for (let c = 0; c < allConnections.length; c++) {
+            let connection = allConnections[c];
+
             if (intersects(node1.position, node2.position, connection.node1.position, connection.node2.position)) {
-                if (connection.inner === true) {
-                    return null;
-                } else {
+                if (inner === true) {
+                    // This connection is inner, destroy the other one
                     connection.destroy();
+                } else if (connection.inner === true) {
+                    // Other connection is inner, do not create
+                    return null;
                 }
             }
-        });
+        }
 
         return new Connection(node1, node2, inner);
     }
 
+    /** Store the connection inside global array and nodes and draw a visible line */
     constructor(node1, node2, inner) {
         this.node1 = node1;
         this.node2 = node2;
-
-        // Is the connection non-breaking - on the edge of polygon
         this.inner = inner;
-
-        this.graphic_line = this.draw(node1, node2);
 
         allConnections.push(this);
         node1.connections.push(this);
         node2.connections.push(this);
+
+        this.graphic_line = this.draw(node1, node2);
     }
 
+    /** Destroy the connection by removing all references and also the graphical object */
     destroy() {
         allConnections = allConnections.filter(obj => obj !== this);
         this.node1.connections = this.node1.connections.filter(obj => obj !== this);
@@ -45,20 +49,23 @@ class Connection {
         this.graphic_line.remove();
     }
 
+    /** Check if the connection contains a given node */
     contains(node) {
         return node === this.node1 || node === this.node2;
     }
 
+    /** Get the other node from the connection. Return null if neither was present */
     other(node) {
         if (node === this.node1) {
             return this.node2;
         } else if (node === this.node2) {
             return this.node1;
         } else {
-            throw Error("Connection does not contain node");
+            return null;
         }
     }
 
+    /** Draw the line between the points and return a reference */
     draw() {
         return linesGroup.append('line')
             .style("stroke", "black")
@@ -70,10 +77,13 @@ class Connection {
     }
 }
 
+let allNodes = [];
 class Node {
     constructor(position) {
         this.position = position;
         this.connections = [];
+
+        allNodes.push(this);
     }
 
     drawCircle(group, color) {
@@ -89,28 +99,33 @@ class Node {
 let polygons = [];
 class Polygon {
     static tryCreate(nodes) {
-        let new_inner_connections = [];
-
+        // Create the inner connections within inner nodes
         for (let i = 0; i < nodes.length; i++) {
             let iNode = nodes[i];
             let jNode = nodes[(i+1) % nodes.length];
 
             // Adds a connection into the connections array
             let inner_connection = Connection.tryCreate(iNode, jNode, true);
-            if (inner_connection !== null) {
-                new_inner_connections.push(inner_connection);
-            } else {
+
+            if (inner_connection === null) {
                 return null;
             }
         }
 
-        return new Polygon(nodes, new_inner_connections);
+        // Create connections with all of the other nodes
+        nodes.forEach(thisNode => {
+            allNodes.forEach(otherNode => {
+                if (thisNode !== otherNode) {
+                    Connection.tryCreate(thisNode, otherNode, false);
+                }
+            });
+        });
+
+        return new Polygon(nodes);
     }
 
     constructor(nodes, inner_connections) {
         this.nodes = nodes;
-        this.inner_connections = inner_connections;
-
         this.graphic_polygon = this.draw();
         polygons.push(this);
     }
@@ -132,10 +147,11 @@ let linesGroup = svg.append("g");
 svg.on('mouseup', function () {
     drawing = true;
 
-    currentNodes.push(new Node([d3.mouse(this)[0], d3.mouse(this)[1]]));
+    currentNodes.push(
+        new Node([d3.mouse(this)[0], d3.mouse(this)[1]])
+    );
 
     if (currentNodes.length === 3) {
-        // Try to create a polygon
         Polygon.tryCreate(currentNodes);
 
         currentlyDrawing.remove();
@@ -176,7 +192,7 @@ let startNode = new Node([63, height/2]);
 let endNode = new Node([width-63, height/2]);
 
 // Draw the connection between the two basic nodes
-let defaultConnection = new Connection(startNode, endNode);
+let defaultConnection = Connection.tryCreate(startNode, endNode, false);
 
 // Draw the points for start and end
 startNode.drawCircle(startEndGroup, "green");
