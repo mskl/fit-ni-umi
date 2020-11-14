@@ -9,21 +9,30 @@ let currentNodes = [];
 
 let allConnections = [];
 class Connection {
-    /** Factory method to that tries to generate a connections and possibly returs null if failed */
+    /** Factory method to that tries to generate a connections and possibly returns null if failed */
     static tryCreate(node1, node2, inner) {
+        let connectionsToDestroy = [];
+
         for (let c = 0; c < allConnections.length; c++) {
             let connection = allConnections[c];
-
             if (intersects(node1.position, node2.position, connection.node1.position, connection.node2.position)) {
-                if (inner === true) {
+                if (inner === true && connection.inner === true) {
+                    // Both connections are inner, stop creating polygon
+                    return null;
+                } else if (inner === true) {
                     // This connection is inner, destroy the other one
-                    connection.destroy();
+                    connectionsToDestroy.push(connection);
                 } else if (connection.inner === true) {
                     // Other connection is inner, do not create
                     return null;
                 }
             }
         }
+
+        // Destroy all scheduled connections
+        connectionsToDestroy.forEach(connection=>{
+            connection.destroy();
+        });
 
         return new Connection(node1, node2, inner);
     }
@@ -34,11 +43,11 @@ class Connection {
         this.node2 = node2;
         this.inner = inner;
 
-        allConnections.push(this);
         node1.connections.push(this);
         node2.connections.push(this);
-
         this.graphic_line = this.draw(node1, node2);
+
+        allConnections.push(this);
     }
 
     /** Destroy the connection by removing all references and also the graphical object */
@@ -65,6 +74,14 @@ class Connection {
         }
     }
 
+    /** Get the length of the connection */
+    length() {
+        let dx = this.node1.position[0] - this.node2.position[0];
+        let dy = this.node1.position[1] - this.node2.position[1];
+
+        return Math.sqrt( Math.pow(dx, 2) + Math.pow(dy, 2) );
+    }
+
     /** Draw the line between the points and return a reference */
     draw() {
         return linesGroup.append('line')
@@ -83,7 +100,20 @@ class Node {
         this.position = position;
         this.connections = [];
 
+        // Djiskra data
+        this.distance = Infinity;
+        this.previous_connection = null;
+
         allNodes.push(this);
+    }
+
+    destroy() {
+        allNodes = allNodes.filter(obj => obj !== this);
+
+        let connectionsCopy = this.connections.slice();
+        connectionsCopy.forEach(connection => {
+           connection.destroy();
+        });
     }
 
     drawCircle(group, color) {
@@ -105,9 +135,7 @@ class Polygon {
             let jNode = nodes[(i+1) % nodes.length];
 
             // Adds a connection into the connections array
-            let inner_connection = Connection.tryCreate(iNode, jNode, true);
-
-            if (inner_connection === null) {
+            if (Connection.tryCreate(iNode, jNode, true) === null) {
                 return null;
             }
         }
@@ -127,6 +155,8 @@ class Polygon {
     constructor(nodes, inner_connections) {
         this.nodes = nodes;
         this.graphic_polygon = this.draw();
+
+        runDjiskra();
         polygons.push(this);
     }
 
@@ -152,7 +182,12 @@ svg.on('mouseup', function () {
     );
 
     if (currentNodes.length === 3) {
-        Polygon.tryCreate(currentNodes);
+        let newPolygon = Polygon.tryCreate(currentNodes);
+        if (newPolygon === null) {
+            currentNodes.forEach(node => {
+                node.destroy();
+            });
+        }
 
         currentlyDrawing.remove();
         currentlyDrawing = svg.append("g");
@@ -186,13 +221,74 @@ svg.on('mousemove', function () {
         .attr('stroke-width', 1);
 });
 
+/** Run the djiskra from the staring node to the end node and show the result */
+function runDjiskra() {
+    // Reset the distances
+    allNodes.forEach(node => {
+       node.distance = Infinity;
+       node.previous_connection = null;
+    });
+
+    // Reset the line widths
+    allConnections.forEach(connection => {
+        connection.graphic_line.style("stroke-width", 1);
+    });
+
+    // Do a shallow copy of all nodes
+    let queue = new TinyQueue(allNodes.slice(), nodeCompare);
+
+    // Run the Djiskra search algorithm
+    startNode.distance = 0;
+
+    let endNodeFound = false;
+    while (queue.length > 0) {
+        let bestNode = queue.pop();
+        bestNode.connections.forEach(connection=>{
+            let otherNode = connection.other(bestNode);
+
+            if (otherNode === endNode) {
+                endNodeFound = true;
+            }
+
+            let alt = bestNode.distance + connection.length();
+            if (alt < otherNode.distance) {
+                otherNode.distance = alt;
+                otherNode.previous_node = bestNode;
+                otherNode.previous_connection = connection;
+            }
+        })
+    }
+
+    let prevConnection = endNode.previous_connection;
+    let prevNode = endNode;
+
+    let sumDistance = 0;
+
+    // Do the backtracking step
+    while (prevConnection !== null) {
+        prevConnection.graphic_line.style("stroke-width", 3);
+
+        sumDistance += prevConnection.length();
+
+        if (prevConnection.other(prevNode).previous_connection === null) {
+            if (prevConnection.other(prevNode) !== startNode) {
+                throw Error("Did not reach the previous node");
+            }
+        }
+
+        prevNode = prevConnection.other(prevNode);
+        prevConnection = prevNode.previous_connection
+    }
+
+    return sumDistance;
+}
 
 // Start and end node
 let startNode = new Node([63, height/2]);
 let endNode = new Node([width-63, height/2]);
 
 // Draw the connection between the two basic nodes
-let defaultConnection = Connection.tryCreate(startNode, endNode, false);
+Connection.tryCreate(startNode, endNode, false);
 
 // Draw the points for start and end
 startNode.drawCircle(startEndGroup, "green");
@@ -200,8 +296,7 @@ endNode.drawCircle(startEndGroup, "red");
 
 // Add some polygon for testing purposes
 let examplePolygon = Polygon.tryCreate([
-    new Node([293, 196]),
+    new Node([293, 300]),
     new Node([414, 64]),
     new Node([431, 190])
 ]);
-
