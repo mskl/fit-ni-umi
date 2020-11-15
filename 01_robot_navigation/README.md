@@ -5,6 +5,7 @@ Code in this repository describes the solution to the robot navigation problem.
 This interactive visualization was made with D3.js to visualize the shortest path of a robot going through a maze that contains rectangular shapes. I wanted to improve my D3 javascript skills while also solving a class assignment for the artificial intelligence course (UMI). The frontend part took a lot of work but I feel like I learned a lot by doing so.
 
 Following gif shows the ability of the developed D3.js interactive visualization:
+
 ![docs/showcase.gif](docs/showcase.gif)
 
 To run the visualization all that is needed to done is to open the `index.html` file, the path will differ from mine:
