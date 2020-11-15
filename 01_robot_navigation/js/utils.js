@@ -36,3 +36,7 @@ if (!Array.prototype.last){
 function nodeCompare(n1, n2) {
     return n1.distance < n2.distance ? -1 : n1.distance > n2.distance ? 1 : 0;
 }
+
+const sleep = (milliseconds) => {
+    return new Promise(resolve => setTimeout(resolve, milliseconds))
+};

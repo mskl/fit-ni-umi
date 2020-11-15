@@ -85,7 +85,7 @@ class Connection {
     /** Draw the line between the points and return a reference */
     draw() {
         return linesGroup.append('line')
-            .style("stroke", "black")
+            .style("stroke", "#f2a2e8")
             .style("stroke-width", 1)
             .attr("x1", this.node1.position[0])
             .attr("y1", this.node1.position[1])
@@ -232,6 +232,7 @@ function runDjiskra() {
     // Reset the line widths
     allConnections.forEach(connection => {
         connection.graphic_line.style("stroke-width", 1);
+        connection.graphic_line.style("stroke", "#f2a2e8");
     });
 
     // Do a shallow copy of all nodes
@@ -240,14 +241,12 @@ function runDjiskra() {
     // Run the Djiskra search algorithm
     startNode.distance = 0;
 
-    let endNodeFound = false;
     while (queue.length > 0) {
         let bestNode = queue.pop();
         bestNode.connections.forEach(connection=>{
             let otherNode = connection.other(bestNode);
-
             if (otherNode === endNode) {
-                endNodeFound = true;
+                // TODO: We could possibly end here.
             }
 
             let alt = bestNode.distance + connection.length();
@@ -262,13 +261,10 @@ function runDjiskra() {
     let prevConnection = endNode.previous_connection;
     let prevNode = endNode;
 
-    let sumDistance = 0;
-
     // Do the backtracking step
     while (prevConnection !== null) {
         prevConnection.graphic_line.style("stroke-width", 3);
-
-        sumDistance += prevConnection.length();
+        prevConnection.graphic_line.style("stroke", "#baed91");
 
         if (prevConnection.other(prevNode).previous_connection === null) {
             if (prevConnection.other(prevNode) !== startNode) {
@@ -280,7 +276,7 @@ function runDjiskra() {
         prevConnection = prevNode.previous_connection
     }
 
-    return sumDistance;
+    return endNode.distance;
 }
 
 // Start and end node
@@ -294,9 +290,12 @@ Connection.tryCreate(startNode, endNode, false);
 startNode.drawCircle(startEndGroup, "green");
 endNode.drawCircle(startEndGroup, "red");
 
+// Run the djiskra for the initial line
+runDjiskra();
+
 // Add some polygon for testing purposes
-let examplePolygon = Polygon.tryCreate([
-    new Node([293, 300]),
-    new Node([414, 64]),
-    new Node([431, 190])
-]);
+// let examplePolygon = Polygon.tryCreate([
+//     new Node([293, 300]),
+//     new Node([414, 64]),
+//     new Node([431, 190])
+// ]);
